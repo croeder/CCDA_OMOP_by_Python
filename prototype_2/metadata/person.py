@@ -13,108 +13,26 @@ metadata = {
         # Often it's not clear these are legitimate or public  OIDs. I haven't found a definition for them.
         # TODO keep an eye on uniqueness and consider if our OMOP patient ID should be a concatination of
         # TODO (cont) root and extension...like if the extension is only unique within a system identified by the root.
-    	'person_id': { # down here to bait trouble with sorting
-            'config_type': 'PRIORITY',
-            'order': 1
-        },
-    	'person_id_patient_170': {
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.3.6132"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 2)
-    	},
-    	'person_id_patient_502': {
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.19.5.99999.2"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 3)
-    	},
-    	'person_id_patient_healthconnectak': {
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.3.564.14977"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 4)
-    	},
-    	'person_id_patient_bennis_shauna': { # same OID as for eHx_Terry
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.3.7732.100"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 5)
-    	},
-        # more general types of person Ids
-    	'person_id_ssn': {
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.4.1"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 103)
-    	},
-    	'person_id_npi': {
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.4.6"]',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 104) # (final field name, priority number)
-    	},
-    	'person_id_extension_catchall': {
-            # if others fail b/c they specify roots not used, just grab an extension
+        
+       'person_id_root': {
     	    'config_type': 'FIELD',
     	    'element': 'hl7:id',
-            'data_type' : 'BIGINTHASH',
-    	    'attribute': "extension",
-            'priority': ('person_id', 105)
-    	},
-    	'person_id_root_catchall': {
-            # if the  extension_catchall fails b/c there is no extension attribute, try just the root
-    	    'config_type': 'FIELD',
-    	    'element': 'hl7:id',
-            'data_type' : 'BIGINTHASH',
     	    'attribute': "root",
-            'priority': ('person_id', 106)
+           'order': 201
     	},
-    	'person_id_hash': {
-    	    'config_type': 'HASH',
-            'fields' : [ 'family_name', 'given_name', 'street_address', 'city', 'country', 'postal_code', 'gender_concept_code', 'race_concept_code', 'ethnicity_concept_code', 'birth_datetime', 'person_id_ssn', 'person_id_other' ],
-            'priority': ('person_id', 107) # (final field name, priority number)
-    	},
-
-        # not for output, but to support person_id_hash creation
-        'family_name': {
+        'person_id_extension': {
     	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:name/hl7:family',
-    	    'attribute': "#text"
+    	    'element': 'hl7:id',
+    	    'attribute': "extension",
+            'order':202
     	},
-        'given_name': {
-    	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:name/hl7:given',
-    	    'attribute': "#text"
-    	},
-        'street_address': {
-    	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:addr/hl7:streetAddressLine',
-    	    'attribute': "#text"
-    	},
-        'city': {
-    	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:addr/hl7:city',
-    	    'attribute': "#text"
-    	},
-        'country': {
-    	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:addr/hl7:country',
-    	    'attribute': "#text"
-    	},
-        'postal_code': {
-    	    'config_type': 'FIELD',
-    	    'element': './hl7:recordTarget/hl7:patientRole/hl7:addr/hl7:postalCode',
-    	    'attribute': "#text"
-    	},
-
-    	'gender_concept_code': {
+    	'person_id': { 
+       	    'config_type': 'HASH',
+            'fields' : [ 'person_id_root', 'person_id_extension' ], 
+            'order' : 1
+        },
+        
+        'gender_concept_code': {
     	    'config_type': 'FIELD',
     	    'element': "hl7:patient/hl7:administrativeGenderCode",
     	    'attribute': "code"
@@ -126,11 +44,11 @@ metadata = {
     	},
     	'gender_concept_id': {
     	    'config_type': 'DERIVED',
-    	    'FUNCTION': VT.map_hl7_to_omop_concept_id,
+    	    'FUNCTION': VT.valueset_xwalk_concept_id,
     	    'argument_names': {
     		    'concept_code': 'gender_concept_code',
     		    'vocabulary_oid': 'gender_concept_codeSystem',
-                'default': 8551 # unkown
+                'default': 0
     	    },
             'order': 2
     	},
@@ -180,7 +98,7 @@ metadata = {
     	},
     	'race_concept_id':{
     	    'config_type': 'DERIVED',
-    	    'FUNCTION': VT.map_hl7_to_omop_concept_id,
+    	    'FUNCTION': VT.codemap_xwalk_concept_id, # VT.valueset_xwalk_concept_id,
     	    'argument_names': {
     		    'concept_code': 'race_concept_code',
     		    'vocabulary_oid': 'race_concept_codeSystem',
@@ -201,7 +119,7 @@ metadata = {
     	},
     	'ethnicity_concept_id': {
     	    'config_type': 'DERIVED',
-    	    'FUNCTION': VT.map_hl7_to_omop_concept_id,
+    	    'FUNCTION': VT.codemap_xwalk_concept_id, # VT.valueset_xwalk_concept_id,
     	    'argument_names': {
     		    'concept_code': 'ethnicity_concept_code',
     		    'vocabulary_oid': 'ethnicity_concept_codeSystem',
@@ -209,16 +127,58 @@ metadata = {
     	    },
             'order': 8
     	},
+        
+        'address_1': {
+            'config_type': 'FIELD',
+            'element': 'hl7:addr/hl7:streetAddressLine',
+            'attribute': "#text"
+        },
+        #'address_2': {
+        'city': {
+            'config_type': 'FIELD',
+            'element': 'hl7:addr/hl7:city',
+            'attribute': "#text"
+        },
+        'state': {
+            'config_type': 'FIELD',
+            'element': 'hl7:addr/hl7:state',
+            'attribute': "#text"
+        },
+        'zip': {
+            'config_type': 'FIELD',
+            'element': 'hl7:addr/hl7:postalCode',
+            'attribute': "#text"
+        },
+        'location_id': { 
+            'config_type': 'HASH',
+            'fields' : [ 'address_1', 'city', 'state', 'zip'  ],
+            'order': 9
+        },
 
-        'location_id': { 'config_type': None, 'order': 9 },
+        
         'provider_id': { 'config_type': None, 'order': 10 },
         'care_site_id': { 'config_type': None, 'order': 11 },
         'person_source_value': { 'config_type': None, 'order': 12 },
-        'gender_source_value': { 'config_type': None, 'order': 13 },
+        'gender_source_value': {
+       	    'config_type': 'FIELD',
+    	    'element': "hl7:patient/hl7:administrativeGenderCode",
+    	    'attribute': "code",
+            'order': 13 
+         },
         'gender_source_concept_id': { 'config_type': None, 'order': 14 },
-        'race_source_value': { 'config_type': None, 'order': 15 },
+        'race_source_value': {
+      	    'config_type': 'FIELD',
+    	    'element': "hl7:patient/hl7:raceCode",
+    	    'attribute': "code",
+            'order': 15
+         },
         'race_source_concept_id': { 'config_type': None, 'order': 16 },
-        'ethnicity_source_value': { 'config_type': None, 'order': 17 },
+        'ethnicity_source_value': {
+       	    'config_type': 'FIELD',
+    	    'element': "hl7:patient/hl7:ethnicGroupCode",
+    	    'attribute': "code",
+            'order': 17
+        },
         'ethnicity_source_concept_id': { 'config_type': None, 'order': 18 }
 
     }

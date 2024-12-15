@@ -70,7 +70,10 @@ def create_hash(input_string):
     """ matches common SQL code when that code also truncates to 13 characters
         SQL: cast(conv(substr(md5(test_string), 1, 15), 16, 10) as bigint) as hashed_value
     """
-    hash_value = hashlib.md5(input_string.encode('utf-8'))
+    if input_string == '':
+        return None
+    
+    hash_value = hashlib.md5(input_string.encode('utf-8').upper())
     truncated_hash = hash_value.hexdigest()[0:13]
     int_trunc_hash_value = int(truncated_hash, 16)
     return int_trunc_hash_value
@@ -113,7 +116,7 @@ def create_base_tracing_dict(config_root_path, root_xpath, domain, omop_field_ta
             template_id = template_match.group(1)
 
     tracing_dict = {
-        'config_path': re.sub(r'hl7:', '', config_root_path),
+        ###'config_path': re.sub(r'hl7:', '', config_root_path),
         'root_xpath': root_xpath,
         'domain': domain,
         'omop_field_tag': omop_field_tag,
@@ -175,7 +178,7 @@ def parse_field_from_dict(field_details_dict, domain_root_element, domain, field
         attribute_value = field_element.get(field_details_dict['attribute'])
         if field_details_dict['attribute'] == "#text":
             try:
-                attribute_value = field_element.text
+                attribute_value = ''.join(field_element[0].itertext())
             except Exception as e:
                 print((f"ERROR: no text elemeent for field element {field_element} "
                         f"for {domain}/{field_tag} root:{root_xpath}"))
@@ -187,9 +190,14 @@ def parse_field_from_dict(field_details_dict, domain_root_element, domain, field
 
 
         # assemble tracing_dict
+<<<<<<< HEAD
         tracing_dict['attribute_value'] =  attribute_value
         tracing_dict['attributes'] =  field_element.attrib
         print(f"ZZZ{field_element.attrib}")
+=======
+        #tracing_dict['attribute_value'] =  attribute_value
+        tracing_dict['attribute_value'] =  field_element.attrib
+>>>>>>> master
         tracing_dict['root_xpath'] = re.sub(r'{.*?}', '', tree.getelementpath(field_element))
         tracing_dict['element_tag'] = re.sub(r'{.*?}', '', (field_element.tag))
     else:
@@ -273,7 +281,10 @@ def do_basic_fields(output_dict, root_element, root_xpath, domain,  domain_meta_
                 output_dict[field_tag] = (pk_dict[field_tag][0], tracing_dict)
             else:
                 logger.error(f"FK could not find {field_tag}  in pk_dict for {domain}/{field_tag}")
+<<<<<<< HEAD
 # FIX path is never used here??
+=======
+>>>>>>> master
                 path = root_xpath + "/"
                 if 'element' in field_details_dict:
                     path = path + field_details_dict['element'] + "/@"
@@ -407,6 +418,9 @@ def do_hash_fields(output_dict, root_element, root_xpath, domain,  domain_meta_d
         if field_details_dict['config_type'] == 'HASH':
             tracing_dict = create_base_tracing_dict(config_root_path, root_xpath, domain, field_tag, field_details_dict)
             value_list = []
+            if 'fields' not in field_details_dict:
+                print(f"ERROR: HASH field {field_tag} is missing 'fields' attributes in domain:{domain}")
+                logger.error(f"HASH field {field_tag} is missing 'fields' attributes in domain:{domain}")
             for field_name in field_details_dict['fields'] :
                 if field_name in output_dict and output_dict[field_name] is not None:
                     value_list.append(output_dict[field_name])
@@ -570,6 +584,15 @@ def parse_domain_from_dict(tree, domain, domain_meta_dict, filename, pk_dict):
               { field_1: (value, path)}, {field_2: (value, path)} ]
         It's a list of because you might have more than one instance of the root path, like when you
         get many observations.
+        
+        arg: tree, this is the lxml.etree parse of the XML file
+        arg: domain, this is a key into the first level of the metadata, an OMOP domain name
+        arg: domain_meta_dict, this is the value of that key in the dict
+        arg: filename, the name of the XML file, for logging
+        arg: pk_dict, a dictionary for Primary Keys, the keys here are field names and 
+             their values are their values. It's a sort of global space for carrying PKs 
+             to other parts of processing where they will be used as FKs. This is useful
+             for things like the main person_id that is part of the context the document creates.
     """
 
     # log to a file per file/domain
@@ -592,7 +615,12 @@ def parse_domain_from_dict(tree, domain, domain_meta_dict, filename, pk_dict):
     logger.info((f"DOMAIN >>  domain:{domain} root:{domain_meta_dict['root']['element']}"
                  f"   ROOT path:{config_root_path}"))
     #root_element_list = tree.findall(domain_meta_dict['root']['element'], ns)
-    root_element_list = tree.xpath(domain_meta_dict['root']['element'], namespaces=ns)
+    root_element_list = None
+    try:
+        root_element_list = tree.xpath(domain_meta_dict['root']['element'], namespaces=ns)
+    except Exception as e:
+        logger.error(f" {domain_meta_dict['root']['element']}   {e}")
+        
     if root_element_list is None or len(root_element_list) == 0:
         logger.error((f"DOMAIN couldn't find root element for {domain}"
                       f" with {domain_meta_dict['root']['element']}"))
@@ -732,8 +760,10 @@ def main() :
         #  'omop_field_tag': omop_field_tag,
         #  'config_type': field_details_dict['config_type'],
         #  'template_id' : template_id
-        df = pd.DataFrame(all_trace_list, columns=['filename', 'template_id', 'config_path', 'root_xpath',   'element_tag', 'config_type', 'domain', 'omop_field_tag', 'attribute_value', 'attributes'])
+        ###df = pd.DataFrame(all_trace_list, columns=['filename', 'template_id', 'config_path', 'root_xpath',   'element_tag', 'config_type', 'domain', 'omop_field_tag', 'attribute_value', 'attributes'])
         df.to_csv("trace.csv", header=True, index=False)
+        df = pd.DataFrame(all_trace_list, columns=['filename', 'template_id','root_xpath',   'element_tag', 'config_type', 'domain', 'omop_field_tag', 'attribute_value'])
+        df.to_csv("trace.csv")
     elif args.directory is not None:
         all_traces_list=[]
         trace_list=[]

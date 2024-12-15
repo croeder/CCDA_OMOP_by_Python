@@ -11,47 +11,42 @@ metadata = {
     		  "hl7:templateId[@root='2.16.840.1.113883.10.20.22.2.22.1']"  # Encounters
     		  "/../hl7:entry/hl7:encounter")
     	},
-    	'visit_occurrence_id': {
-            'config_type': 'PRIORITY',
-            'order': 1
+        
+# WHAT?
+        'provider_id_extension': {
+            'config_type': 'FIELD',
+            'element': 'hl7:performer/hl7:assignedEntity/hl7:id',
+            'attribute': "extension",
         },
-    	'visit_occurrence_id_170': {   # for the 170.314...file
-    	    'config_type': 'PK',
-    	    'element': 'hl7:id[@root="1.3.6.1.4.1.42424242.4.99930.4.3.4"]',
-    	    'attribute': "extension",
-            'priority': ['visit_occurrence_id', 1]
+        'provider_id_root': {
+            'config_type': 'FIELD',
+            'element': 'hl7:performer/hl7:assignedEntity/hl7:id',
+            'attribute': "root",
+        },
+        'provider_id': {
+            'config_type': 'HASH',
+            'fields' : [ 'provider_id_extension', 'provider_id_root'],
+            'order': 1 ,
+        },
+        
+        
+        'visit_occurrence_id_root': {
+    	    'config_type': 'FIELD',
+    	    'element': 'hl7:id',
+    	    'attribute': "root",
+            'order': 201
     	},
-    	'visit_occurrence_id_other': {
-    	    'config_type': 'PK',
-    	    'element': 'hl7:id[@root="2.16.840.1.113883.4.6"]',
-    	    'attribute': "extension",
-            'priority': ['visit_occurrence_id', 2]
-    	},
-    	'visit_occurrence_id_root': {
-    	    'config_type': 'PK',
+        'visit_occurrence_id_extension': {
+    	    'config_type': 'FIELD',
     	    'element': 'hl7:id',
     	    'attribute': "extension",
+            'order': 202
     	},
-       	'visit_occurrence_id_extension': {
-    	    'config_type': 'PK',
-    	    'element': 'id',
-    	    'attribute': "root",
-    	},
-    	'visit_occurrence_id_hash': {
-    	    'config_type': 'HASH',
-            'fields' : [ 'visit_occurrence_id_root', 'visit_occurrence_id_extension'],
-            'priority': ('visit_occurrence_id', 5)
-    	},
-    	'visit_occurrence_id_hash_natural': {
-    	    'config_type': 'HASH',
-            'fields' : [ 'person_id', 'provider_id', 'visit_concept_code', 'visit_start_date_low', 'visit_start_date_value' ],
-            'priority': ('visit_occurrence_id', 6)
-    	},
-        'visit_occurrence_id_na': {
-    	    'config_type': 'CONSTANT',
-            'constant_value': "0",
-            'priority': ['visit_occurrence_id', 100]
-    	},
+    	'visit_occurrence_id': { 
+       	    'config_type': 'HASH',
+            'fields' : [ 'visit_occurrence_id_root', 'visit_occurrence_id_extension' ], 
+            'order' : 1
+        },
 
     	'person_id': {
     	    'config_type': 'FK',
@@ -108,6 +103,7 @@ metadata = {
     	    'config_type': 'PRIORITY',
             'order':6
     	},
+        
     	'visit_end_date_high':  {
     	    'config_type': 'FIELD',
             'data_type':'DATE',
@@ -129,8 +125,6 @@ metadata = {
     	    'attribute': "value",
             'priority':  ['visit_end_date', 3]
     	},
-
-
         'visit_end_datetime' : {  'config_type': None, 'order': 7 },
 
         'visit_type_concept_id' : {
@@ -188,7 +182,19 @@ metadata = {
             'order': 10
     	},
 
-        'visit_source_value': { 'config_type': None, 'order': 11},
+        'visit_source_value': { 
+            'config_type': 'DERIVED', 
+            'FUNCTION': VT.concat_fields,
+    	    'argument_names': {
+                'first_field': 'visit_concept_codeSystem',
+    		    'second_field': 'visit_concept_code',
+                'default': 0
+    	    },
+            
+            'order': 11
+        },
+        
+        
         'visit_source_concept_id': { 'config_type': None, 'order': 12},
         'admitting_source_concept_id': { 'config_type': None, 'order': 13},
         'admitting_source_value': { 'config_type': None, 'order': 14},
